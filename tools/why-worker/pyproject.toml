@@ -1,0 +1,5 @@
+[project]
+name = "why-worker"
+version = "0.1.0"
+description = "AI / analysis worker for kubectl-why"
+dependencies = []

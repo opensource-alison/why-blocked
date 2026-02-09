@@ -1,0 +1,16 @@
+{
+  "artifacts": [
+    {"name": "openssl", "version": "3.0.13"},
+    {"name": "zlib", "version": "1.2.13"},
+    {"name": "curl", "version": "8.5.0"},
+    {"name": "libc", "version": "2.36"},
+    {"name": "nginx", "version": "1.25.4"},
+    {"name": "pcre2", "version": "10.42"}
+  ],
+  "source": {
+    "type": "image",
+    "target": {
+      "userInput": "nginx:1.25"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "output.reason": "MOTIVO: {{.Summary}}",
+  "output.status": "ESTADO: {{.Status}}",
+  "output.resource": "RECURSO: {{.Kind}}/{{.Name}}",
+  "output.namespace": "NAMESPACE: {{.Namespace}}",
+  "output.decision": "DECISIÓN: {{.ID}}",
+  "output.time": "HORA: {{.Time}}",
+  "section.violations": "VIOLACIONES ({{.Count}}):",
+  "section.nextActions": "PRÓXIMAS ACCIONES:",
+  "label.what": "Qué:",
+  "label.evidence": "Evidencia:",
+  "label.fix": "Corrección (mínima):",
+
+  "decision.summary.blocked_critical": "El despliegue fue bloqueado debido a violaciones críticas de seguridad",
+
+  "violation.k8s.privileged.title": "Contenedor Privilegiado",
+  "violation.k8s.privileged.message": "Los contenedores no deben ejecutarse en modo privilegiado. Se detectó privileged: true en el contenedor '{{.container}}'.",
+
+  "violation.image.latest.title": "Uso Inseguro de Imagen",
+  "violation.image.latest.message": "La imagen '{{.image}}' usa una etiqueta mutable ('{{.tag}}'), lo que socava la reproducibilidad y el seguimiento de seguridad. Se detectaron {{.cveCount}} CVE críticos.",
+
+  "action.fix.disable_privileged.title": "Desactive el modo privilegiado",
+  "action.fix.disable_privileged.detail": "Establezca securityContext.privileged: false en la especificación del contenedor '{{.container}}'.",
+
+  "action.next.update_manifest.title": "Actualice el manifiesto de despliegue",
+  "action.next.update_manifest.detail": "Aplique los parches sugeridos para cumplir con los requisitos de seguridad.",
+
+  "action.next.scan_image.title": "Escanee la imagen localmente",
+  "action.next.scan_image.detail": "Use 'trivy image {{.image}}' para ver el informe completo de vulnerabilidades."
+}

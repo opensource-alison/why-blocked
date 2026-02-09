@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kubectl-why/schemas/worker-request.schema.json",
+  "title": "WorkerRequest",
+  "description": "Request sent from Go side to the Python worker via stdin.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "API version, e.g., 'v1alpha1'"
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Unique identifier for the request, must be echoed back"
+    },
+    "locale": {
+      "type": "string",
+      "description": "ISO language code, e.g., 'en', 'ko'"
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string" },
+            "name": { "type": "string" },
+            "namespace": { "type": "string" },
+            "uid": { "type": "string" },
+            "apiVersion": { "type": "string" }
+          },
+          "required": ["kind", "name", "namespace"],
+          "additionalProperties": false
+        },
+        "imageRefs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "policyFindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyFinding"
+          }
+        },
+        "rawContext": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["resource"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "requestId", "input"],
+  "additionalProperties": false,
+  "$defs": {
+    "PolicyFinding": {
+      "type": "object",
+      "properties": {
+        "policyId": { "type": "string" },
+        "title": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "message": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["K8S_FIELD", "IMAGE_SCAN", "SBOM", "POLICY", "OTHER"]
+              },
+              "subject": { "type": "string" },
+              "detail": { "type": "string" },
+              "raw": { "type": "object", "additionalProperties": true }
+            },
+            "required": ["type", "subject", "detail"],
+            "additionalProperties": false
+          }
+        },
+        "suggestedFixes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "detail": { "type": "string" },
+              "patch": {
+                "type": "object",
+                "properties": {
+                  "format": { "type": "string" },
+                  "content": { "type": "string" }
+                },
+                "required": ["format", "content"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["title", "detail"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["policyId", "title", "severity", "message"],
+      "additionalProperties": false
+    }
+  }
+}

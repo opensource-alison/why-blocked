@@ -1,0 +1,41 @@
+{
+  "version": "v1alpha1",
+  "requestId": "gemini-test-001",
+  "provider": "gemini",
+  "locale": "en",
+  "input": {
+    "resource": {
+      "kind": "Pod",
+      "name": "nginx-pod",
+      "namespace": "production"
+    },
+    "policyFindings": [
+      {
+        "policyId": "PSP-001",
+        "title": "Container running as root",
+        "severity": "HIGH",
+        "message": "Container is configured to run as root user (UID 0)",
+        "evidence": [
+          {
+            "type": "K8S_FIELD",
+            "subject": "spec.securityContext.runAsNonRoot",
+            "detail": "false"
+          }
+        ]
+      },
+      {
+        "policyId": "NET-001",
+        "title": "Privileged container",
+        "severity": "CRITICAL",
+        "message": "Container is running in privileged mode",
+        "evidence": [
+          {
+            "type": "K8S_FIELD",
+            "subject": "spec.containers[0].securityContext.privileged",
+            "detail": "true"
+          }
+        ]
+      }
+    ]
+  }
+}

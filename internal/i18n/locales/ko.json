@@ -1,0 +1,30 @@
+{
+  "output.reason": "이유: {{.Summary}}",
+  "output.status": "상태: {{.Status}}",
+  "output.resource": "리소스: {{.Kind}}/{{.Name}}",
+  "output.namespace": "네임스페이스: {{.Namespace}}",
+  "output.decision": "결정: {{.ID}}",
+  "output.time": "시간: {{.Time}}",
+  "section.violations": "위반 사항 ({{.Count}}):",
+  "section.nextActions": "다음 조치:",
+  "label.what": "내용:",
+  "label.evidence": "증거:",
+  "label.fix": "수정 (최소):",
+
+  "decision.summary.blocked_critical": "심각한 보안 위반으로 인해 배포가 차단되었습니다",
+
+  "violation.k8s.privileged.title": "특권(Privileged) 컨테이너",
+  "violation.k8s.privileged.message": "특권(privileged) 컨테이너는 허용되지 않습니다. '{{.container}}' 컨테이너에서 privileged=true가 감지되었습니다.",
+
+  "violation.image.latest.title": "안전하지 않은 이미지 사용",
+  "violation.image.latest.message": "이미지 '{{.image}}'가 '{{.tag}}' 같은 변경 가능한 태그를 사용하고 있어 재현성과 보안 추적이 어렵습니다. {{.cveCount}}개의 심각한 CVE가 발견되었습니다.",
+
+  "action.fix.disable_privileged.title": "특권 모드 비활성화",
+  "action.fix.disable_privileged.detail": "'{{.container}}' 컨테이너 스펙에서 securityContext.privileged: false로 설정하세요.",
+
+  "action.next.update_manifest.title": "배포 매니페스트 업데이트",
+  "action.next.update_manifest.detail": "보안 요구사항을 충족하도록 제안된 패치를 적용하세요.",
+
+  "action.next.scan_image.title": "로컬에서 이미지 스캔",
+  "action.next.scan_image.detail": "'trivy image {{.image}}'를 사용하여 전체 취약점 보고서를 확인하세요."
+}

@@ -1,0 +1,30 @@
+{
+  "output.reason": "理由: {{.Summary}}",
+  "output.status": "状態: {{.Status}}",
+  "output.resource": "リソース: {{.Kind}}/{{.Name}}",
+  "output.namespace": "名前空間: {{.Namespace}}",
+  "output.decision": "判定: {{.ID}}",
+  "output.time": "時刻: {{.Time}}",
+  "section.violations": "違反 ({{.Count}}):",
+  "section.nextActions": "次のアクション:",
+  "label.what": "内容:",
+  "label.evidence": "証拠:",
+  "label.fix": "修正 (最小):",
+
+  "decision.summary.blocked_critical": "重大なセキュリティ違反によりデプロイメントがブロックされました",
+
+  "violation.k8s.privileged.title": "特権コンテナ",
+  "violation.k8s.privileged.message": "コンテナは特権モードで実行してはいけません。コンテナ '{{.container}}' で privileged: true が検出されました。",
+
+  "violation.image.latest.title": "安全でないイメージの使用",
+  "violation.image.latest.message": "イメージ '{{.image}}' は変更可能なタグ ('{{.tag}}') を使用しており、再現性とセキュリティ追跡が損なわれます。{{.cveCount}} 件の重大な CVE が検出されました。",
+
+  "action.fix.disable_privileged.title": "特権モードを無効化してください",
+  "action.fix.disable_privileged.detail": "コンテナ '{{.container}}' の spec で securityContext.privileged: false を設定してください。",
+
+  "action.next.update_manifest.title": "デプロイメントマニフェストを更新",
+  "action.next.update_manifest.detail": "セキュリティ要件を満たすために提案されたパッチを適用してください。",
+
+  "action.next.scan_image.title": "ローカルでイメージをスキャン",
+  "action.next.scan_image.detail": "'trivy image {{.image}}' を使用して完全な脆弱性レポートを確認してください。"
+}

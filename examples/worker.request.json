@@ -1,0 +1,35 @@
+{
+  "version": "v1alpha1",
+  "requestId": "req-67890",
+  "locale": "ko",
+  "input": {
+    "resource": {
+      "kind": "Pod",
+      "name": "nginx-pod",
+      "namespace": "default",
+      "apiVersion": "v1"
+    },
+    "imageRefs": ["nginx:latest"],
+    "policyFindings": [
+      {
+        "policyId": "POL-001",
+        "title": "Privileged Container",
+        "severity": "CRITICAL",
+        "message": "Privileged containers are not allowed.",
+        "evidence": [
+          {
+            "type": "K8S_FIELD",
+            "subject": "spec.containers[0].securityContext.privileged",
+            "detail": "true"
+          }
+        ],
+        "suggestedFixes": [
+          {
+            "title": "Disable Privileged Mode",
+            "detail": "Set privileged: false in the securityContext."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "output.reason": "WHY: {{.Summary}}",
+  "output.status": "STATUS: {{.Status}}",
+  "output.resource": "RESOURCE: {{.Kind}}/{{.Name}}",
+  "output.namespace": "NAMESPACE: {{.Namespace}}",
+  "output.decision": "DECISION: {{.ID}}",
+  "output.time": "TIME: {{.Time}}",
+  "section.violations": "VIOLATIONS ({{.Count}}):",
+  "section.nextActions": "NEXT ACTIONS:",
+  "label.what": "What:",
+  "label.evidence": "Evidence:",
+  "label.fix": "Fix (minimal):",
+
+  "decision.summary.blocked_critical": "Deployment blocked due to critical security violations",
+
+  "violation.k8s.privileged.title": "Privileged Container",
+  "violation.k8s.privileged.message": "Containers must not run as privileged. Found privileged: true in container '{{.container}}'.",
+
+  "violation.image.latest.title": "Insecure Image Usage",
+  "violation.image.latest.message": "Image '{{.image}}' uses a mutable tag ('{{.tag}}'), which undermines reproducibility and security tracking. {{.cveCount}} critical CVEs detected.",
+
+  "action.fix.disable_privileged.title": "Disable privileged mode",
+  "action.fix.disable_privileged.detail": "Set securityContext.privileged: false in the container spec for '{{.container}}'.",
+
+  "action.next.update_manifest.title": "Update deployment manifest",
+  "action.next.update_manifest.detail": "Apply the suggested patches to meet security requirements.",
+
+  "action.next.scan_image.title": "Scan image locally",
+  "action.next.scan_image.detail": "Use 'trivy image {{.image}}' to see full vulnerability report."
+}

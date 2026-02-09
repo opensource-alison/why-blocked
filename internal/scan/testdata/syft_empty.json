@@ -1,0 +1,9 @@
+{
+  "artifacts": [],
+  "source": {
+    "type": "image",
+    "target": {
+      "userInput": "scratch"
+    }
+  }
+}

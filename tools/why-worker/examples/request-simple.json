@@ -1,0 +1,61 @@
+{
+  "version": "v1alpha1",
+  "requestId": "example-001",
+  "locale": "en",
+  "input": {
+    "resource": {
+      "kind": "Pod",
+      "name": "nginx-pod",
+      "namespace": "default"
+    },
+    "imageRefs": ["nginx:1.19"],
+    "policyFindings": [
+      {
+        "policyId": "PSP-001",
+        "title": "Running as root",
+        "severity": "HIGH",
+        "message": "Container is configured to run as root user, which violates security policy",
+        "evidence": [
+          {
+            "type": "K8S_FIELD",
+            "subject": "spec.containers[0].securityContext.runAsNonRoot",
+            "detail": "false"
+          }
+        ],
+        "suggestedFixes": [
+          {
+            "title": "Enable non-root user",
+            "detail": "Set runAsNonRoot to true",
+            "patch": {
+              "format": "yaml",
+              "content": "spec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 1000"
+            }
+          }
+        ]
+      },
+      {
+        "policyId": "IMG-002",
+        "title": "Critical CVE detected",
+        "severity": "CRITICAL",
+        "message": "Image nginx:1.19 contains CVE-2024-1234 (CRITICAL severity)",
+        "evidence": [
+          {
+            "type": "IMAGE_SCAN",
+            "subject": "nginx:1.19",
+            "detail": "CVE-2024-1234: Buffer overflow in HTTP/2 module"
+          }
+        ],
+        "suggestedFixes": [
+          {
+            "title": "Update to patched version",
+            "detail": "Upgrade to nginx:1.21.6 or later",
+            "patch": {
+              "format": "yaml",
+              "content": "spec:\n  containers:\n  - name: nginx\n    image: nginx:1.21.6"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

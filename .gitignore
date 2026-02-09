@@ -1,0 +1,32 @@
+# Binaries
+bin/
+why
+
+# Go
+vendor/
+*.exe
+*.test
+*.out
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# IDEs
+.idea/
+.vscode/
+
+# AI / Assistants
+.claude/
+.ai-cache/
+.llm-cache/
+
+# macOS
+.DS_Store

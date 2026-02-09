@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: safe-app
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: safe-app
+  template:
+    metadata:
+      labels:
+        app: safe-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: app
+        image: myapp:1.2.3
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+      volumes:
+      - name: config
+        configMap:
+          name: app-config

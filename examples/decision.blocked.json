@@ -1,0 +1,44 @@
+{
+  "id": "dec-12345",
+  "timestamp": "2026-02-05T16:20:00Z",
+  "resource": {
+    "kind": "Pod",
+    "name": "nginx-pod",
+    "namespace": "default",
+    "apiVersion": "v1"
+  },
+  "status": "BLOCKED",
+  "summary": "Deployment blocked due to privileged container and root user violations.",
+  "violations": [
+    {
+      "policyId": "POL-001",
+      "title": "Privileged Container",
+      "severity": "CRITICAL",
+      "message": "Privileged containers are not allowed.",
+      "evidence": [
+        {
+          "type": "K8S_FIELD",
+          "subject": "spec.containers[0].securityContext.privileged",
+          "detail": "true"
+        }
+      ],
+      "fix": [
+        {
+          "title": "Disable Privileged Mode",
+          "detail": "Set privileged: false in the securityContext.",
+          "patch": {
+            "format": "json-patch",
+            "content": "[{\"op\": \"replace\", \"path\": \"/spec/containers/0/securityContext/privileged\", \"value\": false}]"
+          }
+        }
+      ]
+    }
+  ],
+  "nextActions": [
+    {
+      "title": "Fix SecurityContext",
+      "detail": "Update the pod specification to comply with security policies."
+    }
+  ],
+  "version": "v1"
+}

@@ -1,0 +1,6 @@
+# Minimal dependencies for why-worker
+# All functionality uses Python stdlib (json, urllib, etc.)
+# Only test dependencies listed below
+
+# Test dependencies (optional)
+pytest>=7.0.0

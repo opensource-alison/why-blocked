@@ -1,0 +1,23 @@
+{
+  "version": "v1alpha1",
+  "requestId": "req-67890",
+  "decisionAdditions": {
+    "summary": "Privileged mode detected in Pod 'nginx-pod'. This poses a significant security risk.",
+    "translations": {
+      "summary": "Pod 'nginx-pod'에서 권한 있는(privileged) 모드가 감지되었습니다. 이는 심각한 보안 위험을 초래합니다.",
+      "violations": [
+        {
+          "policyId": "POL-001",
+          "title": "권한 있는 컨테이너",
+          "message": "권한 있는(privileged) 컨테이너는 허용되지 않습니다. 보안 컨텍스트에서 privileged: false로 설정하십시오."
+        }
+      ],
+      "nextActions": [
+        {
+          "title": "보안 설정 수정",
+          "detail": "보안 정책을 준수하도록 Pod 사양을 업데이트하십시오."
+        }
+      ]
+    }
+  }
+}

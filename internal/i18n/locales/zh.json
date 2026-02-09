@@ -1,0 +1,30 @@
+{
+  "output.reason": "原因: {{.Summary}}",
+  "output.status": "状态: {{.Status}}",
+  "output.resource": "资源: {{.Kind}}/{{.Name}}",
+  "output.namespace": "命名空间: {{.Namespace}}",
+  "output.decision": "决策: {{.ID}}",
+  "output.time": "时间: {{.Time}}",
+  "section.violations": "违规 ({{.Count}}):",
+  "section.nextActions": "后续操作:",
+  "label.what": "说明:",
+  "label.evidence": "证据:",
+  "label.fix": "修复 (最小):",
+
+  "decision.summary.blocked_critical": "由于严重的安全违规，部署已被阻止",
+
+  "violation.k8s.privileged.title": "特权容器",
+  "violation.k8s.privileged.message": "容器不得以特权模式运行。在容器 '{{.container}}' 中检测到 privileged: true。",
+
+  "violation.image.latest.title": "不安全的镜像使用",
+  "violation.image.latest.message": "镜像 '{{.image}}' 使用了可变标签 ('{{.tag}}')，这会破坏可重现性和安全追踪。检测到 {{.cveCount}} 个严重的 CVE。",
+
+  "action.fix.disable_privileged.title": "请禁用特权模式",
+  "action.fix.disable_privileged.detail": "在容器 '{{.container}}' 的 spec 中设置 securityContext.privileged: false。",
+
+  "action.next.update_manifest.title": "更新部署清单",
+  "action.next.update_manifest.detail": "应用建议的补丁以满足安全要求。",
+
+  "action.next.scan_image.title": "在本地扫描镜像",
+  "action.next.scan_image.detail": "使用 'trivy image {{.image}}' 查看完整的漏洞报告。"
+}

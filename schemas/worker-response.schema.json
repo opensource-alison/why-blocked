@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kubectl-why/schemas/worker-response.schema.json",
+  "title": "WorkerResponse",
+  "description": "Response sent from Python worker to Go side via stdout.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "requestId": {
+      "type": "string"
+    },
+    "decisionAdditions": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string" },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "policyId": { "type": "string" },
+              "title": { "type": "string" },
+              "severity": {
+                "type": "string",
+                "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+              },
+              "message": { "type": "string" },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["K8S_FIELD", "IMAGE_SCAN", "SBOM", "POLICY", "OTHER"]
+                    },
+                    "subject": { "type": "string" },
+                    "detail": { "type": "string" },
+                    "raw": { "type": "object", "additionalProperties": true }
+                  },
+                  "required": ["type", "subject", "detail"]
+                }
+              },
+              "fix": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "detail": { "type": "string" },
+                    "patch": {
+                      "type": "object",
+                      "properties": {
+                        "format": { "type": "string" },
+                        "content": { "type": "string" }
+                      },
+                      "required": ["format", "content"]
+                    }
+                  },
+                  "required": ["title", "detail"]
+                }
+              }
+            },
+            "required": ["policyId", "title", "severity", "message"]
+          }
+        },
+        "nextActions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "detail": { "type": "string" },
+              "patch": {
+                "type": "object",
+                "properties": {
+                  "format": { "type": "string" },
+                  "content": { "type": "string" }
+                }
+              }
+            },
+            "required": ["title", "detail"]
+          }
+        },
+        "translations": {
+          "type": "object",
+          "properties": {
+            "summary": { "type": "string" },
+            "violations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "policyId": { "type": "string" },
+                  "title": { "type": "string" },
+                  "message": { "type": "string" }
+                },
+                "required": ["policyId", "title", "message"]
+              }
+            },
+            "nextActions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "detail": { "type": "string" }
+                },
+                "required": ["title", "detail"]
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "requestId"],
+  "additionalProperties": false
+}

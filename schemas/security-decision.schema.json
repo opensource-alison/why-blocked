@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kubectl-why/schemas/security-decision.schema.json",
+  "title": "SecurityDecision",
+  "description": "The single source of truth for explaining why a resource was blocked or allowed.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC3339 timestamp"
+    },
+    "resource": {
+      "$ref": "#/$defs/ResourceRef"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["BLOCKED", "ALLOWED"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "summaryKey": {
+      "type": "string",
+      "description": "i18n message key for the summary"
+    },
+    "summaryArgs": {
+      "$ref": "#/$defs/StringMap",
+      "description": "Template arguments for summaryKey"
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Violation"
+      }
+    },
+    "nextActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Action"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": ["id", "timestamp", "resource", "status", "summary", "version"],
+  "additionalProperties": false,
+  "$defs": {
+    "ResourceRef": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string" },
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
+        "uid": { "type": "string" },
+        "apiVersion": { "type": "string" }
+      },
+      "required": ["kind", "name", "namespace"],
+      "additionalProperties": false
+    },
+    "Violation": {
+      "type": "object",
+      "properties": {
+        "policyId": { "type": "string" },
+        "title": { "type": "string" },
+        "titleKey": { "type": "string", "description": "i18n message key for the title" },
+        "titleArgs": { "$ref": "#/$defs/StringMap" },
+        "severity": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "message": { "type": "string" },
+        "messageKey": { "type": "string", "description": "i18n message key for the message" },
+        "messageArgs": { "$ref": "#/$defs/StringMap" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Evidence" }
+        },
+        "fix": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Action" }
+        },
+        "references": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["policyId", "title", "severity", "message"],
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["K8S_FIELD", "IMAGE_SCAN", "SBOM", "POLICY", "OTHER"]
+        },
+        "subject": { "type": "string" },
+        "detail": { "type": "string" },
+        "raw": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["type", "subject", "detail"],
+      "additionalProperties": false
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "titleKey": { "type": "string", "description": "i18n message key for the title" },
+        "titleArgs": { "$ref": "#/$defs/StringMap" },
+        "detail": { "type": "string" },
+        "detailKey": { "type": "string", "description": "i18n message key for the detail" },
+        "detailArgs": { "$ref": "#/$defs/StringMap" },
+        "patch": { "$ref": "#/$defs/PatchSuggestion" }
+      },
+      "required": ["title", "detail"],
+      "additionalProperties": false
+    },
+    "PatchSuggestion": {
+      "type": "object",
+      "properties": {
+        "format": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "required": ["format", "content"],
+      "additionalProperties": false
+    },
+    "StringMap": {
+      "type": "object",
+      "description": "Template argument map for i18n interpolation",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}
