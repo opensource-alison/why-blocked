@@ -1,6 +1,10 @@
 package i18n
 
-import "testing"
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+)
 
 func TestNew_English(t *testing.T) {
 	tr, err := New("en")
@@ -129,4 +133,35 @@ func TestAllLocalesLoad(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLocaleCompleteness(t *testing.T) {
+	enKeys := mustLoadLocaleKeys(t, "en")
+
+	for _, lang := range []string{"ko", "ja", "zh", "es"} {
+		t.Run(lang, func(t *testing.T) {
+			langKeys := mustLoadLocaleKeys(t, lang)
+			for key := range enKeys {
+				if _, ok := langKeys[key]; !ok {
+					t.Errorf("%s.json missing key: %s", lang, key)
+				}
+			}
+		})
+	}
+}
+
+func mustLoadLocaleKeys(t *testing.T, lang string) map[string]string {
+	t.Helper()
+
+	data, err := localeFS.ReadFile(fmt.Sprintf("locales/%s.json", lang))
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", lang, err)
+	}
+
+	var values map[string]string
+	if err := json.Unmarshal(data, &values); err != nil {
+		t.Fatalf("json.Unmarshal(%s) error = %v", lang, err)
+	}
+
+	return values
 }

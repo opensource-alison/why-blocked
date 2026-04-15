@@ -76,6 +76,19 @@ func TestPrintExplainUsage(t *testing.T) {
 	}
 }
 
+func TestPrintDiagnoseUsage(t *testing.T) {
+	got := PrintDiagnoseUsage()
+	if got == "" {
+		t.Error("PrintDiagnoseUsage() returned empty string")
+	}
+	if !strings.Contains(got, "diagnose") {
+		t.Error("PrintDiagnoseUsage() should contain 'diagnose'")
+	}
+	if !strings.Contains(got, "--error") {
+		t.Error("PrintDiagnoseUsage() should mention '--error'")
+	}
+}
+
 func TestFormatUnknownCommand(t *testing.T) {
 	got := FormatUnknownCommand("badcmd")
 	if !strings.Contains(got, "badcmd") {
@@ -175,6 +188,19 @@ func TestRenderHelpExplain(t *testing.T) {
 	}
 	if !strings.Contains(got, "WHAT IT DOES") {
 		t.Error("RenderHelpExplain() should contain 'WHAT IT DOES' section")
+	}
+}
+
+func TestRenderHelpDiagnose(t *testing.T) {
+	got := RenderHelpDiagnose()
+	if got == "" {
+		t.Error("RenderHelpDiagnose() returned empty string")
+	}
+	if !strings.Contains(got, "diagnose") {
+		t.Error("RenderHelpDiagnose() should contain 'diagnose'")
+	}
+	if !strings.Contains(got, "SUPPORTED DETECTION") {
+		t.Error("RenderHelpDiagnose() should contain 'SUPPORTED DETECTION' section")
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alisonui/why-blocked/internal/decision"
+	"github.com/alisonui/why-blocked/internal/detect"
 )
 
 func TestRenderDecisionJSON_ValidJSON(t *testing.T) {
@@ -171,5 +172,57 @@ func TestRenderDecisionJSON_FullDecisionShape(t *testing.T) {
 	}
 	if len(dec.NextActions) != 2 {
 		t.Errorf("len(nextActions) = %d, want 2", len(dec.NextActions))
+	}
+}
+
+func TestRenderDiagnoseJSON(t *testing.T) {
+	source := &detect.BlockSource{
+		Engine:     "PSA",
+		PolicyName: "restricted",
+		RawMessage: `violates PodSecurity "restricted:latest"`,
+		Confidence: "high",
+		Hints:      []string{"Check namespace PSA labels:"},
+	}
+	d := decision.ExampleBlockedDecision()
+
+	data, err := RenderDiagnoseJSON(source, &d)
+	if err != nil {
+		t.Fatalf("RenderDiagnoseJSON() error = %v", err)
+	}
+
+	var env DiagnoseEnvelope
+	if err := json.Unmarshal(data, &env); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+
+	if env.SchemaVersion != "v1" {
+		t.Fatalf("schemaVersion = %q, want v1", env.SchemaVersion)
+	}
+	if env.BlockSource.Engine != "PSA" {
+		t.Fatalf("blockSource.engine = %q, want PSA", env.BlockSource.Engine)
+	}
+	if env.Decision == nil {
+		t.Fatal("decision should be present when a decision is provided")
+	}
+}
+
+func TestRenderDiagnoseJSON_OmitsDecisionWhenAbsent(t *testing.T) {
+	source := &detect.BlockSource{
+		Engine:     "Webhook",
+		RawMessage: "admission webhook denied the request",
+		Confidence: "medium",
+	}
+
+	data, err := RenderDiagnoseJSON(source, nil)
+	if err != nil {
+		t.Fatalf("RenderDiagnoseJSON() error = %v", err)
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+	if _, ok := raw["decision"]; ok {
+		t.Fatal("decision field should be omitted when absent")
 	}
 }

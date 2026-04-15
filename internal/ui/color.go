@@ -70,6 +70,14 @@ func Cyan(s string) string {
 	return "\033[36m" + s + "\033[0m"
 }
 
+// Blue returns the string wrapped in ANSI blue codes if colors are enabled.
+func Blue(s string) string {
+	if !colorEnabled {
+		return s
+	}
+	return "\033[34m" + s + "\033[0m"
+}
+
 // Yellow returns the string wrapped in ANSI yellow codes if colors are enabled
 func Yellow(s string) string {
 	if !colorEnabled {

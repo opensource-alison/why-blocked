@@ -18,6 +18,7 @@ func PrintGlobalUsage() string {
 	b.WriteString("\n")
 	b.WriteString(ui.Bold("COMMANDS") + "\n")
 	b.WriteString("  " + ui.Cyan("explain") + " <resource>        Explain why a resource was blocked\n")
+	b.WriteString("  " + ui.Cyan("diagnose") + " [flags]         Identify which admission system blocked a resource\n")
 	b.WriteString("  " + ui.Cyan("decision") + " list|get       List or get security decisions\n")
 	b.WriteString("  " + ui.Cyan("mock") + " create <name>     Create a mock decision for testing\n")
 	b.WriteString("  " + ui.Cyan("help") + " [topic]           Show detailed help for a topic\n")
@@ -41,9 +42,13 @@ func PrintGlobalUsage() string {
 	b.WriteString("  " + ui.Dim("# List recent decisions") + "\n")
 	b.WriteString("  kubectl why decision list\n")
 	b.WriteString("\n")
+	b.WriteString("  " + ui.Dim("# Diagnose a kubectl apply error") + "\n")
+	b.WriteString("  kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -\n")
+	b.WriteString("\n")
 	b.WriteString(ui.Bold("LEARN MORE") + "\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help") + "           Show all help topics\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help") + " explain    Detailed guide for explain command\n")
+	b.WriteString("  kubectl why " + ui.Cyan("help") + " diagnose   Detailed guide for diagnose command\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help") + " flags      Complete flag reference\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help") + " scan       Guide for CVE/SBOM scanning\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help") + " ai         Guide for AI enhancement\n")
@@ -198,6 +203,24 @@ func PrintExplainUsage() string {
 	return b.String()
 }
 
+// PrintDiagnoseUsage returns the help text for the 'diagnose' command.
+func PrintDiagnoseUsage() string {
+	var b strings.Builder
+	b.WriteString("Error: provide error text via --error flag or pipe from stdin\n")
+	b.WriteString("\n")
+	b.WriteString("Usage:\n")
+	b.WriteString("  kubectl why diagnose --error \"<error text>\"\n")
+	b.WriteString("  kubectl why diagnose -\n")
+	b.WriteString("  kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -\n")
+	b.WriteString("  kubectl why diagnose --error \"<error text>\" -f pod.yaml\n")
+	b.WriteString("\n")
+	b.WriteString("Description:\n")
+	b.WriteString("  Identify which admission controller or policy engine blocked your resource.\n")
+	b.WriteString("  Optionally combine the detected block source with local manifest evaluation.\n")
+	b.WriteString("\n")
+	return b.String()
+}
+
 // RenderHelpIndex returns the help index showing all available help topics.
 func RenderHelpIndex() string {
 	var b strings.Builder
@@ -207,6 +230,7 @@ func RenderHelpIndex() string {
 	b.WriteString("\n")
 	b.WriteString(ui.Bold("COMMANDS") + "\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help explain") + "     Explain why resources were blocked\n")
+	b.WriteString("  kubectl why " + ui.Cyan("help diagnose") + "    Identify which admission system blocked a resource\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help decision") + "    Manage and query security decisions\n")
 	b.WriteString("  kubectl why " + ui.Cyan("help mock") + "        Create test data\n")
 	b.WriteString("\n")
@@ -270,6 +294,45 @@ func RenderHelpExplain() string {
 	b.WriteString("  kubectl why help flags   " + ui.Dim("# All flags") + "\n")
 	b.WriteString("  kubectl why help scan    " + ui.Dim("# CVE/SBOM scanning") + "\n")
 	b.WriteString("  kubectl why help ai      " + ui.Dim("# AI enhancement") + "\n")
+	b.WriteString("\n")
+	return b.String()
+}
+
+// RenderHelpDiagnose returns detailed help for the diagnose command.
+func RenderHelpDiagnose() string {
+	var b strings.Builder
+	b.WriteString(ui.Bold(ui.Cyan("kubectl why diagnose")) + " - Identify admission blockers\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("USAGE") + "\n")
+	b.WriteString("  kubectl why diagnose " + ui.Yellow("--error") + " " + ui.Dim("\"<error text>\"") + "\n")
+	b.WriteString("  kubectl why diagnose " + ui.Dim("-") + "\n")
+	b.WriteString("  kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose " + ui.Dim("-") + "\n")
+	b.WriteString("  kubectl why diagnose " + ui.Yellow("--error") + " " + ui.Dim("\"<error text>\"") + " " + ui.Yellow("-f") + " " + ui.Dim("pod.yaml") + "\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("WHAT IT DOES") + "\n")
+	b.WriteString("  Analyzes Kubernetes error messages to identify which admission controller\n")
+	b.WriteString("  or policy engine blocked your resource.\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("SUPPORTED DETECTION") + "\n")
+	b.WriteString("  • Pod Security Admission (PSA)\n")
+	b.WriteString("  • Kyverno\n")
+	b.WriteString("  • Gatekeeper / OPA\n")
+	b.WriteString("  • RBAC Forbidden\n")
+	b.WriteString("  • Generic admission webhooks\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("COMBINED MODE") + "\n")
+	b.WriteString("  When used with " + ui.Yellow("-f") + ", diagnose also evaluates the manifest locally and\n")
+	b.WriteString("  shows both the blocking system and any built-in policy violations found.\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("EXAMPLES") + "\n")
+	b.WriteString("  kubectl why diagnose " + ui.Yellow("--error") + " " + ui.Dim("\"Error from server (Forbidden): ...\"") + "\n")
+	b.WriteString("  kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose " + ui.Dim("-") + "\n")
+	b.WriteString("  kubectl why diagnose " + ui.Yellow("--error") + " " + ui.Dim("\"violates PodSecurity \\\"restricted:latest\\\"\"") + " " + ui.Yellow("-f") + " " + ui.Dim("pod.yaml") + "\n")
+	b.WriteString("\n")
+	b.WriteString(ui.Bold("EXIT CODES") + " " + ui.Dim("(for automation)") + "\n")
+	b.WriteString("  " + ui.Green("0") + " = Detection succeeded\n")
+	b.WriteString("  " + ui.Yellow("2") + " = Detection succeeded and combined manifest evaluation is BLOCKED\n")
+	b.WriteString("  " + ui.Red("1") + " = Runtime error (missing input, invalid flags, file read/parse error)\n")
 	b.WriteString("\n")
 	return b.String()
 }

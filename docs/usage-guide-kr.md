@@ -76,13 +76,18 @@ $ echo $?
 ```bash
 $ kubectl why eval -f testdata/safe-deployment.yaml
 
-WHY: Resource meets security requirements
+WHY: Resource meets security requirements with 1 advisory
 STATUS: ALLOWED
 
 RESOURCE: Deployment/safe-app
 NAMESPACE: production
 DECISION: eval-ff9af99d5fc8
 TIME: 2026-02-08T10:12:26Z
+
+VIOLATIONS (1):
+1) ℹ️ [INFO] NetworkPolicy not verified
+   What: Cannot verify NetworkPolicy exists for namespace 'production' in offline mode
+   ...
 
 Saved decision eval-ff9af99d5fc8 to ~/.kubectl-why/decisions/...
 
@@ -166,6 +171,11 @@ echo "All manifests passed security checks"
 - Pods (v1)
 - StatefulSets (apps/v1)
 - DaemonSets (apps/v1)
+- Jobs (batch/v1)
+- CronJobs (batch/v1)
+- ReplicaSets (apps/v1)
+- Roles 및 ClusterRoles
+- RoleBindings 및 ClusterRoleBindings
 
 Pod 템플릿 스펙이 있는 모든 리소스가 평가됩니다.
 
@@ -179,6 +189,7 @@ eval 명령은 온라인 평가자와 동일한 규칙을 적용합니다:
 | POL-SEC-002 | HIGH | HostPath 볼륨 감지됨 |
 | POL-SEC-003 | HIGH | runAsNonRoot 설정되지 않음 |
 | POL-SEC-004 | HIGH | 이미지가 :latest 태그 사용 또는 태그 없음 |
+| ADV-NET-001 | INFO | 오프라인에서는 NetworkPolicy 존재 여부를 확인할 수 없음 |
 
 ## 파일 형식
 

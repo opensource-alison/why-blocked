@@ -16,6 +16,7 @@ const (
 type Severity string
 
 const (
+	SeverityInfo     Severity = "INFO"
 	SeverityLow      Severity = "LOW"
 	SeverityMedium   Severity = "MEDIUM"
 	SeverityHigh     Severity = "HIGH"
@@ -29,6 +30,7 @@ const (
 	EvidenceK8sField  EvidenceType = "K8S_FIELD"
 	EvidenceImageScan EvidenceType = "IMAGE_SCAN"
 	EvidenceSbom      EvidenceType = "SBOM"
+	EvidenceConfig    EvidenceType = "CONFIG"
 	EvidenceOther     EvidenceType = "OTHER"
 )
 
@@ -56,6 +58,12 @@ type ResourceRef struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 }
 
+// StandardRef represents a reference to an external security standard.
+type StandardRef struct {
+	ID  string `json:"id"`  // e.g., "CIS 5.2.1", "PSA restricted"
+	URL string `json:"url"` // link to the standard's documentation
+}
+
 // Violation describes a specific policy breach.
 type Violation struct {
 	PolicyID    string            `json:"policyId"`
@@ -68,15 +76,18 @@ type Violation struct {
 	MessageArgs map[string]string `json:"messageArgs,omitempty"`
 	Evidence    []Evidence        `json:"evidence,omitempty"`
 	Fix         []Action          `json:"fix,omitempty"`
+	Standards   []StandardRef     `json:"standards,omitempty"`
 	References  []string          `json:"references,omitempty"`
 }
 
 // Evidence provides structured data supporting a violation finding.
 type Evidence struct {
-	Type    EvidenceType   `json:"type"`
-	Subject string         `json:"subject"`
-	Detail  string         `json:"detail"`
-	Raw     map[string]any `json:"raw,omitempty"`
+	Type       EvidenceType      `json:"type"`
+	Subject    string            `json:"subject"`
+	Detail     string            `json:"detail"`
+	DetailKey  string            `json:"detailKey,omitempty"`
+	DetailArgs map[string]string `json:"detailArgs,omitempty"`
+	Raw        map[string]any    `json:"raw,omitempty"`
 }
 
 // Action suggests a step to remediate a violation or proceed.
@@ -87,6 +98,7 @@ type Action struct {
 	Detail     string            `json:"detail"`
 	DetailKey  string            `json:"detailKey,omitempty"`
 	DetailArgs map[string]string `json:"detailArgs,omitempty"`
+	FixExample string            `json:"fixExample,omitempty"`
 	Patch      PatchSuggestion   `json:"patch,omitempty"`
 }
 

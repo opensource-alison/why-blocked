@@ -1,355 +1,172 @@
 # kubectl-why
 
-**Fast, offline Kubernetes security decision explainer.**
+A kubectl plugin that explains why Kubernetes resources are blocked and guides you to the fix.
 
-kubectl-why explains **why a Kubernetes resource was blocked** by security policies using static analysis and clear, human-readable output.
+## What it does
 
-It's a **reasoning CLI**, not a scanner. It works **offline by default** and integrates naturally as a **kubectl plugin**.
+- Evaluates manifests against 14 security rules + 1 advisory, all grounded in CIS Kubernetes Benchmark and Pod Security Standards
+- Detects which admission system blocked your resource: PSA, Kyverno, Gatekeeper, RBAC, or a generic admission webhook
+- Shows concrete YAML fix examples with standard references
 
----
+## Quick start
+
+```bash
+# Check a manifest before deploying
+kubectl why eval -f deployment.yaml
+
+# Find out why kubectl apply was rejected
+kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -
+```
 
 ## Installation
 
-### Via Krew (Recommended)
-
 ```bash
-kubectl krew install why
+# From source
+go install github.com/alisonui/why-blocked/cmd/why@latest
 ```
 
-### Manual Installation
+Or download a binary from the [Releases](../../releases) page.
 
-Download the latest binary from [GitHub Releases](https://github.com/opensource-alison/why-blocked/releases):
-
-```bash
-# macOS/Linux
-curl -LO https://github.com/opensource-alison/why-blocked/releases/latest/download/kubectl-why-$(uname -s)-$(uname -m)
-chmod +x kubectl-why-*
-sudo mv kubectl-why-* /usr/local/bin/kubectl-why
-
-# Verify installation
-kubectl why version
-```
-
-### From Source
-
-Build from source (developer): see the Usage Guide for build notes: [docs/usage-guide.md](docs/usage-guide.md).
-
----
-
-## Quick Start
-
-```bash
-# Explain why a resource was blocked
-kubectl why explain deployment my-app
-
-# List recent security decisions
-kubectl why decision list
-
-# Get details of a specific decision
-kubectl why decision get <decision-id>
-
-# Evaluate a manifest file (offline, no cluster needed)
-kubectl why eval -f deployment.yaml
-
-# Create a test decision to explore the tool
-kubectl why mock create test-app
-kubectl why explain test-app
-```
-
----
-
-## Features
-
-- ✅ **Offline-first** – Works without cluster access via `eval` command
-  - ✅ **Fast static analysis** – Explains blocking decisions in milliseconds
-  - ✅ **Human-readable output** – Clear violations, evidence, and fix suggestions
-  - ✅ **Multi-language support** – Output in English, Korean, Japanese, Chinese, Spanish
-  - ✅ **JSON output** – Structured data for CI/CD automation
-  - ✅ **Optional AI explanations** – Enhanced summaries via `--ai` flag
-  - ✅ **Optional CVE/SBOM scanning** – Attach live scan results via `--scan` flag
-
----
-
-## Common Commands
+## Commands
 
 | Command | Description |
-|---------|-------------|
-| `kubectl why explain <name>` | Explain why a Deployment was blocked (assumes kind=Deployment) |
-| `kubectl why explain pod <name>` | Explain why a Pod was blocked |
-| `kubectl why decision list` | List recent security decisions (up to 10) |
-| `kubectl why decision get <id>` | Retrieve a specific decision by ID |
-| `kubectl why eval -f <file>` | Evaluate a YAML manifest offline (no cluster needed) |
-| `kubectl why mock create <name>` | Create a mock blocked decision for testing |
-| `kubectl why help` | Show all help topics |
-| `kubectl why version` | Show version information |
+| --- | --- |
+| `eval -f <file>` | Evaluate a manifest against security rules |
+| `diagnose` | Identify which admission system blocked a resource |
+| `explain <name>` | Explain why a saved resource was blocked (assumes `Deployment`) |
+| `explain <kind> <name>` | Explain why a saved resource was blocked for an explicit kind |
+| `decision list` | List recent security decisions |
+| `decision get <id>` | Get details of a specific decision |
+| `mock create <name>` | Create a mock decision for testing |
+| `help [topic]` | Show detailed help for a topic |
+| `version` | Show version information |
 
----
+## Security rules
 
-## Output Examples
+| Rule ID | Check | Severity | Standards |
+| --- | --- | --- | --- |
+| `POL-SEC-001` | Privileged container | `CRITICAL` | `CIS 5.2.1`, `PSA restricted` |
+| `POL-SEC-002` | HostPath volume | `HIGH` | `CIS 5.2.8`, `PSA baseline` |
+| `POL-SEC-003` | Missing `runAsNonRoot` | `HIGH` | `CIS 5.2.6`, `PSA restricted` |
+| `POL-SEC-004` | Latest image tag | `HIGH` | `CIS 5.5.1` |
+| `POL-SEC-005` | `hostPID` | `HIGH` | `CIS 5.2.2`, `PSA baseline` |
+| `POL-SEC-006` | `hostNetwork` | `HIGH` | `CIS 5.2.4`, `PSA baseline` |
+| `POL-SEC-007` | `hostIPC` | `HIGH` | `CIS 5.2.3`, `PSA baseline` |
+| `POL-SEC-008` | Dangerous capabilities | `HIGH` | `CIS 5.2.7`, `PSA restricted` |
+| `POL-SEC-009` | `allowPrivilegeEscalation` not disabled | `MEDIUM` | `CIS 5.2.5`, `PSA restricted` |
+| `POL-SEC-010` | Runs as root (UID 0) | `HIGH` | `CIS 5.2.6`, `PSA restricted` |
+| `POL-RBAC-001` | Wildcard RBAC permissions | `CRITICAL` | `CIS 5.1.3` |
+| `POL-RBAC-002` | Unrestricted secret access | `HIGH` | `CIS 5.1.2` |
+| `POL-RBAC-003` | `pods/exec` permission | `HIGH` | `CIS 5.1.3` |
+| `POL-RBAC-004` | `cluster-admin` binding | `CRITICAL` | `CIS 5.1.1` |
+| `ADV-NET-001` | NetworkPolicy not verified | `INFO` | `CIS 5.3.2` |
 
-### Text Output (Default)
+Every rule references a published security standard. INFO-level advisories do not affect the exit code or block status.
+
+## Supported resources
+
+The evaluator handles these Kubernetes resource types:
+
+- Pod-like: `Pod`, `Deployment`, `StatefulSet`, `DaemonSet`, `Job`, `CronJob`, `ReplicaSet`
+- RBAC: `Role`, `ClusterRole`, `RoleBinding`, `ClusterRoleBinding`
+
+## Policy engine detection
+
+| Engine | Confidence |
+| --- | --- |
+| Pod Security Admission (PSA) | High |
+| Kyverno | High |
+| Gatekeeper / OPA | High |
+| RBAC Forbidden | High |
+| Generic Webhook | Medium |
 
 ```bash
-$ kubectl why explain deployment my-app
+kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -
 
-WHY: Resource blocked: 1 critical, 1 high severity violations found
-STATUS: BLOCKED
-
-RESOURCE: Deployment/my-app
-NAMESPACE: production
-DECISION: dec-a1b2c3d4
-TIME: 2026-02-09T10:30:00Z
-
-VIOLATIONS (2):
-1) [CRITICAL] Privileged Container
-   What: Container 'nginx' runs in privileged mode, which grants access to all
-   host devices and bypasses security boundaries.
-   Evidence:
-     - (K8S_FIELD) spec.template.spec.containers[0].securityContext.privileged:
-       privileged: true
-   Fix (minimal):
-     - Disable privileged mode: Set securityContext.privileged: false
-
-2) [HIGH] Missing runAsNonRoot
-   What: Container 'nginx' does not enforce running as a non-root user.
-   Evidence:
-     - (K8S_FIELD) spec.template.spec.containers[0].securityContext.runAsNonRoot:
-       not set or false
-   Fix (minimal):
-     - Set securityContext.runAsNonRoot: true for container 'nginx'
+# Combined: detect blocker + evaluate manifest
+kubectl why diagnose --error "denied the request" -f pod.yaml
 ```
 
-### JSON Output
+## Output formats
 
-```bash
-$ kubectl why explain deployment my-app -o json
+`--output text` is the default:
 
+```text
+$ kubectl why eval -f testdata/safe-deployment.yaml
+WHY: Resource meets security requirements with 1 advisory
+STATUS: ALLOWED
+```
+
+Use `--output json` for automation:
+
+```json
 {
   "schemaVersion": "v1",
   "decision": {
-    "id": "dec-a1b2c3d4",
-    "timestamp": "2026-02-09T10:30:00Z",
-    "status": "BLOCKED",
-    "summary": "Resource blocked: 1 critical, 1 high severity violations found",
-    "resource": {
-      "kind": "Deployment",
-      "name": "my-app",
-      "namespace": "production"
-    },
-    "violations": [...]
+    "status": "ALLOWED",
+    "violations": [
+      {
+        "policyId": "ADV-NET-001",
+        "severity": "INFO"
+      }
+    ]
   }
 }
 ```
 
----
+## Languages
 
-## Optional Features
+5 languages are supported with 119 localized strings each:
 
-### Multi-Language Output
-
-```bash
-# Korean
-kubectl why --lang ko explain deployment my-app
-
-# Japanese
-kubectl why --lang ja explain deployment my-app
-
-# Chinese
-kubectl why --lang zh explain deployment my-app
-
-# Spanish
-kubectl why --lang es explain deployment my-app
-```
-
-Supported languages: `en` (default), `ko`, `ja`, `zh`, `es`
-
-Language is auto-detected from `LC_ALL` or `LANG` environment variables if `--lang` is not specified.
-
-### AI-Powered Explanations
-
-Add AI-generated summaries and action items:
+- `en`
+- `ko`
+- `ja`
+- `zh`
+- `es`
 
 ```bash
-# Set API key
-export WHY_AI_API_KEY=your-openai-api-key
-
-# Get AI-enhanced explanation
-kubectl why --ai explain deployment my-app
+kubectl why eval -f pod.yaml --lang ko
 ```
 
-**Requirements:**
-- Python 3.x installed (auto-detected as `python3` or `python`)
-  - OpenAI API key (or compatible provider)
+## Optional features
 
-**Optional configuration:**
-```bash
-# Use custom Python path
-export WHY_WORKER_COMMAND="python3 /path/to/worker/main.py"
-
-# Use different AI provider
-export WHY_AI_PROVIDER=gemini
-export WHY_GEMINI_API_KEY=your-gemini-key
-```
-
-See [docs/ai-worker-dev.md](docs/ai-worker-dev.md) for detailed setup.
-
-### External Vulnerability Scanning
-
-Attach live CVE and SBOM data from external scanners:
+### AI enhancement
 
 ```bash
-# CVE scanning (requires trivy)
-kubectl why --scan cve explain deployment my-app
-
-# SBOM generation (requires syft)
-kubectl why --scan sbom explain deployment my-app
-
-# Both scanners
-kubectl why --scan cve,sbom explain deployment my-app
+export WHY_AI_API_KEY=your-key
+kubectl why eval -f pod.yaml --ai
 ```
 
-**Installation:**
-```bash
-# macOS
-brew install trivy syft
+AI changes presentation only. It does not change rule evaluation, severity, or exit codes. The bundled worker supports OpenAI, Gemini, and Claude providers.
 
-# Linux
-# See https://trivy.dev and https://github.com/anchore/syft
-```
-
-If scanners are not installed, kubectl-why will warn and continue without scan data.
-
----
-
-## Offline Manifest Evaluation
-
-Evaluate Kubernetes YAML files without cluster access:
+### CVE / SBOM scanning
 
 ```bash
-# Evaluate a deployment manifest
-kubectl why eval -f deployment.yaml
-
-# Evaluate with JSON output
-kubectl why -o json eval -f deployment.yaml
-
-# Override namespace
-kubectl why eval -f deployment.yaml -n production
+kubectl why eval -f pod.yaml --scan cve,sbom
 ```
 
-**Exit codes:**
-- `0` = ALLOWED (resource meets security requirements)
-  - `1` = ERROR (invalid file, parse error, etc.)
-  - `2` = BLOCKED (resource has security violations)
+Requires `trivy` and/or `syft` to be installed.
 
-**CI/CD Integration:**
-```bash
-#!/bin/bash
-# Fail pipeline if any manifest violates security policies
-for manifest in k8s/*.yaml; do
-    if ! kubectl why eval -f "$manifest"; then
-        echo "❌ FAILED: $manifest has security violations"
-        exit 1
-    fi
-done
-echo "✅ All manifests passed security checks"
-```
+## Design principles
 
-See [docs/usage-guide.md](docs/usage-guide.md) for comprehensive examples.
+- Offline-first: core evaluation and diagnosis work without cluster access or external services
+- Evidence-based: when evidence is insufficient, detection returns `Unknown` instead of guessing
+- Standards-grounded: every rule cites CIS or PSA; there is no subjective scoring
+- Explanation engine: it complements admission controllers, it does not replace them
 
----
+## Project structure
 
-## Security Policies
-
-kubectl-why evaluates resources against these policies:
-
-| Policy ID | Severity | Check |
-|-----------|----------|-------|
-| POL-SEC-001 | CRITICAL | Privileged containers |
-| POL-SEC-002 | HIGH | HostPath volumes |
-| POL-SEC-003 | HIGH | Missing runAsNonRoot setting |
-| POL-SEC-004 | HIGH | Image tag is `:latest` or missing |
-
----
-
-## Global Flags
-
-```bash
---dir <path>          Decision storage directory (default: ~/.kubectl-why/decisions)
---lang <code>         Output language: en, ko, ja, zh, es (auto-detected if not set)
--o, --output <fmt>    Output format: text, json (default: text)
---scan <modes>        Enable scanners: cve, sbom (comma-separated)
---ai                  Add AI-generated explanation (requires WHY_AI_API_KEY)
---quiet               Suppress status messages (keeps warnings/errors)
---no-color            Disable colored output
-```
-
----
-
-## Documentation
-
-- **[Usage Guide](docs/usage-guide.md)** – Comprehensive command reference and examples
-- **[AI Worker (Dev Notes)](docs/ai-worker-dev.md)** – Optional AI enrichment setup & worker integration notes
-- **[Extending AI Providers](docs/extending-ai-providers.md)** – Developer guide to add new AI providers
-
----
-
-## Philosophy
-
-kubectl-why is intentionally focused:
-
-- **Fast and local** – Offline-first, no external dependencies by default
-  - **Explains decisions** – Not a scanner, not a platform, not a runtime analyzer
-  - **Human-readable** – Clear reasoning over technical dumps
-  - **Minimal scope** – Answers "Why was this blocked?" and nothing more
-
----
-
-## Examples
-
-### Example 1: Check why a deployment was blocked
-
-```bash
-kubectl why explain deployment nginx-app
-```
-
-### Example 2: List recent decisions
-
-```bash
-kubectl why decision list
-```
-
-### Example 3: Get decision details in Korean
-
-```bash
-kubectl why --lang ko decision get dec-12345
-```
-
-### Example 4: Evaluate manifest in CI/CD
-
-```bash
-kubectl why eval -f k8s/deployment.yaml
-if [ $? -eq 2 ]; then
-  echo "Deployment has security violations"
-  exit 1
-fi
-```
-
-### Example 5: AI-enhanced explanation with CVE scanning
-
-```bash
-export WHY_AI_API_KEY=sk-...
-kubectl why --ai --scan cve explain deployment my-app
-```
-
----
-
-## Support
-
-- **Issues:** https://github.com/opensource-alison/why-blocked/issues
-  - **Discussions:** https://github.com/opensource-alison/why-blocked/discussions
-  - **Documentation:** Run `kubectl why help` for built-in help
----
+- `cmd/why/` — CLI entry point and subcommands
+- `internal/eval/` — offline rule evaluator
+- `internal/detect/` — admission blocker detection engine
+- `internal/decision/` — decision schema and stored decision types
+- `internal/output/` — text and JSON rendering
+- `internal/i18n/` — embedded locale files and translation loading
+- `internal/repository/` — local decision storage
+- `internal/scan/` — Trivy and Syft integration
+- `internal/ui/` — terminal colors and formatting
+- `tools/why-worker/` — optional Python AI worker
 
 ## License
 
-MIT – See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE).

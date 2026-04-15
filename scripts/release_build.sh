@@ -32,8 +32,6 @@ build_one() {
 
   local tmpdir
   tmpdir="$(mktemp -d)"
-  # Use a RETURN trap that embeds the tmpdir path as a literal to avoid "unbound variable"
-  # when `set -u` is enabled and the function scope ends.
   trap "rm -rf '${tmpdir}'" RETURN
 
   local outbin="${tmpdir}/${BIN_NAME}${ext}"
@@ -42,16 +40,23 @@ build_one() {
   GOOS="${os}" GOARCH="${arch}" CGO_ENABLED=0 \
     go build -trimpath -ldflags "-s -w" -o "${outbin}" "${ENTRY}"
 
+  # ---- NEW: include LICENSE in the archive root ----
+  if [[ ! -f "${ROOT_DIR}/LICENSE" ]]; then
+    echo "ERROR: LICENSE file not found at ${ROOT_DIR}/LICENSE"
+    exit 1
+  fi
+  cp "${ROOT_DIR}/LICENSE" "${tmpdir}/LICENSE"
+  # -----------------------------------------------
+
   local base="${BIN_NAME}_${VERSION#v}_${os}_${arch}"
   local archive="${OUT_DIR}/${base}.${archive_ext}"
 
   if [[ "${archive_ext}" == "tar.gz" ]]; then
-    tar -C "${tmpdir}" -czf "${archive}" "${BIN_NAME}${ext}"
+    tar -C "${tmpdir}" -czf "${archive}" "${BIN_NAME}${ext}" LICENSE
   else
-    (cd "${tmpdir}" && zip -q "${archive}" "${BIN_NAME}${ext}")
+    (cd "${tmpdir}" && zip -q "${archive}" "${BIN_NAME}${ext}" LICENSE)
   fi
 
-  # sha256
   local sha
   sha="$(shasum -a 256 "${archive}" | awk '{print $1}')"
   echo "    sha256: ${sha}"
@@ -63,6 +68,8 @@ main() {
   echo "VERSION=${VERSION}"
   echo "OUT_DIR=${OUT_DIR}"
   echo
+
+  rm -f "${OUT_DIR}/SHA256SUMS.txt"
 
   for t in "${TARGETS[@]}"; do
     IFS="/" read -r os arch <<< "${t}"

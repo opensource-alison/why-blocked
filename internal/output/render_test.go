@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alisonui/why-blocked/internal/decision"
+	"github.com/alisonui/why-blocked/internal/detect"
 	"github.com/alisonui/why-blocked/internal/i18n"
 	"github.com/alisonui/why-blocked/internal/ui"
 )
@@ -55,7 +56,7 @@ func TestRenderDecision(t *testing.T) {
 	output := RenderDecision(d, nil)
 
 	// Verify header section
-	if !strings.Contains(output, "WHY: Deployment blocked due to security violations") {
+	if !strings.Contains(output, "WHY: Resource blocked: 1 critical severity violations found") {
 		t.Error("RenderDecision() missing summary in header")
 	}
 	if !strings.Contains(output, "STATUS: BLOCKED") {
@@ -125,7 +126,7 @@ func TestRenderDecision_NoViolations(t *testing.T) {
 	output := RenderDecision(d, nil)
 
 	// Should have header
-	if !strings.Contains(output, "WHY: Deployment allowed") {
+	if !strings.Contains(output, "WHY: Resource meets security requirements") {
 		t.Error("RenderDecision() missing summary for allowed decision")
 	}
 	if !strings.Contains(output, "STATUS: ALLOWED") {
@@ -140,6 +141,74 @@ func TestRenderDecision_NoViolations(t *testing.T) {
 	// Should not have next actions section
 	if strings.Contains(output, "NEXT ACTIONS") {
 		t.Error("RenderDecision() should not show next actions section when empty")
+	}
+}
+
+func TestRenderDecision_InfoAdvisory(t *testing.T) {
+	d := decision.SecurityDecision{
+		ID:        "test-info",
+		Timestamp: time.Date(2026, 2, 5, 16, 30, 0, 0, time.UTC),
+		Version:   "v1alpha1",
+		Status:    decision.StatusAllowed,
+		Summary:   "Resource meets security requirements with 1 advisory",
+		Resource: decision.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "safe-app",
+			Namespace: "production",
+		},
+		Violations: []decision.Violation{
+			{
+				PolicyID: "ADV-NET-001",
+				Title:    "NetworkPolicy not verified",
+				Severity: decision.SeverityInfo,
+				Message:  "Cannot verify NetworkPolicy exists for namespace 'production' in offline mode",
+				Standards: []decision.StandardRef{
+					{ID: "CIS 5.3.2", URL: "https://www.cisecurity.org/benchmark/kubernetes"},
+				},
+			},
+		},
+	}
+
+	output := RenderDecision(d, nil)
+
+	if !strings.Contains(output, "ℹ️ [INFO] NetworkPolicy not verified") {
+		t.Fatalf("RenderDecision() missing INFO advisory prefix: %q", output)
+	}
+	if !strings.Contains(output, "📋 Standards: CIS 5.3.2") {
+		t.Fatalf("RenderDecision() missing NetworkPolicy standard reference: %q", output)
+	}
+}
+
+func TestRenderDiagnosis(t *testing.T) {
+	source := &detect.BlockSource{
+		Engine:     "Kyverno",
+		PolicyName: "disallow-privileged",
+		RuleName:   "validate-privileged",
+		RawMessage: "line1\nline2\nline3\nline4",
+		Confidence: "high",
+		Hints:      []string{"Inspect policy", "kubectl get clusterpolicy -o name"},
+	}
+	d := decision.ExampleBlockedDecision()
+
+	out := RenderDiagnosis(source, &d, nil)
+
+	if !strings.Contains(out, "BLOCKED BY: Kyverno") {
+		t.Fatalf("RenderDiagnosis() missing block source header: %q", out)
+	}
+	if !strings.Contains(out, "Policy: disallow-privileged") {
+		t.Fatalf("RenderDiagnosis() missing policy: %q", out)
+	}
+	if !strings.Contains(out, "Rule: validate-privileged") {
+		t.Fatalf("RenderDiagnosis() missing rule: %q", out)
+	}
+	if !strings.Contains(out, "line1\n  line2\n  line3") {
+		t.Fatalf("RenderDiagnosis() should limit raw error display to first lines: %q", out)
+	}
+	if strings.Contains(out, "line4") {
+		t.Fatalf("RenderDiagnosis() should not include fourth line in error snippet: %q", out)
+	}
+	if !strings.Contains(out, "VIOLATIONS (") {
+		t.Fatalf("RenderDiagnosis() missing decision violations: %q", out)
 	}
 }
 
@@ -603,20 +672,26 @@ func collapseWhitespace(s string) string {
 }
 
 func TestColorSeverity(t *testing.T) {
+	tr, err := i18n.New("en")
+	if err != nil {
+		t.Fatalf("i18n.New(en) error = %v", err)
+	}
+
 	tests := []struct {
-		severity string
+		severity decision.Severity
 		want     string
 	}{
-		{"CRITICAL", "CRITICAL"}, // Would be red if colors enabled
-		{"HIGH", "HIGH"},         // Would be yellow if colors enabled
-		{"MEDIUM", "MEDIUM"},     // Would be cyan if colors enabled
-		{"LOW", "LOW"},           // No color
-		{"UNKNOWN", "UNKNOWN"},   // No color
+		{decision.SeverityCritical, "CRITICAL"}, // Would be red if colors enabled
+		{decision.SeverityHigh, "HIGH"},         // Would be yellow if colors enabled
+		{decision.SeverityMedium, "MEDIUM"},     // Would be cyan if colors enabled
+		{decision.SeverityInfo, "INFO"},         // Would be blue if colors enabled
+		{decision.SeverityLow, "LOW"},           // No color
+		{decision.Severity("UNKNOWN"), "UNKNOWN"},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.severity, func(t *testing.T) {
-			got := colorSeverity(tt.severity)
+		t.Run(string(tt.severity), func(t *testing.T) {
+			got := colorSeverity(tt.severity, tr)
 			// With colors disabled (via TestMain), should return plain text
 			if got != tt.want {
 				t.Errorf("colorSeverity(%q) = %q, want %q", tt.severity, got, tt.want)
@@ -630,20 +705,26 @@ func TestColorSeverity_WithColorsEnabled(t *testing.T) {
 	ui.SetEnabled(true)
 	defer ui.SetEnabled(false)
 
+	tr, err := i18n.New("en")
+	if err != nil {
+		t.Fatalf("i18n.New(en) error = %v", err)
+	}
+
 	tests := []struct {
-		severity       string
+		severity       decision.Severity
 		shouldHaveANSI bool
 	}{
-		{"CRITICAL", true},
-		{"HIGH", true},
-		{"MEDIUM", true},
-		{"LOW", false},
-		{"UNKNOWN", false},
+		{decision.SeverityCritical, true},
+		{decision.SeverityHigh, true},
+		{decision.SeverityMedium, true},
+		{decision.SeverityInfo, true},
+		{decision.SeverityLow, false},
+		{decision.Severity("UNKNOWN"), false},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.severity, func(t *testing.T) {
-			got := colorSeverity(tt.severity)
+		t.Run(string(tt.severity), func(t *testing.T) {
+			got := colorSeverity(tt.severity, tr)
 			hasANSI := strings.Contains(got, "\033[")
 
 			if hasANSI != tt.shouldHaveANSI {
@@ -655,10 +736,123 @@ func TestColorSeverity_WithColorsEnabled(t *testing.T) {
 			}
 
 			// Should still contain the severity text
-			if !strings.Contains(got, tt.severity) {
+			if !strings.Contains(got, string(tt.severity)) {
 				t.Errorf("colorSeverity(%q) should contain severity text, got %q", tt.severity, got)
 			}
 		})
+	}
+}
+
+func TestRenderDecision_WithStandards(t *testing.T) {
+	d := decision.SecurityDecision{
+		ID:        "test-standards",
+		Timestamp: time.Date(2026, 2, 5, 16, 30, 0, 0, time.UTC),
+		Version:   "v1alpha1",
+		Status:    decision.StatusBlocked,
+		Summary:   "Blocked",
+		Resource: decision.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "test-app",
+			Namespace: "default",
+		},
+		Violations: []decision.Violation{
+			{
+				PolicyID: "POL-SEC-001",
+				Title:    "Privileged Container",
+				Severity: decision.SeverityCritical,
+				Message:  "Container runs as privileged",
+				Standards: []decision.StandardRef{
+					{ID: "CIS 5.2.1", URL: "https://www.cisecurity.org/benchmark/kubernetes"},
+					{ID: "PSA restricted", URL: "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted"},
+				},
+			},
+		},
+	}
+
+	out := RenderDecision(d, nil)
+
+	// Standards line should appear
+	if !strings.Contains(out, "📋 Standards:") {
+		t.Error("RenderDecision() missing standards label")
+	}
+	if !strings.Contains(out, "CIS 5.2.1") {
+		t.Error("RenderDecision() missing CIS 5.2.1 standard ID")
+	}
+	if !strings.Contains(out, "PSA restricted") {
+		t.Error("RenderDecision() missing PSA restricted standard ID")
+	}
+}
+
+func TestRenderDecision_WithoutStandards(t *testing.T) {
+	d := decision.SecurityDecision{
+		ID:        "test-no-standards",
+		Timestamp: time.Date(2026, 2, 5, 16, 30, 0, 0, time.UTC),
+		Version:   "v1alpha1",
+		Status:    decision.StatusBlocked,
+		Summary:   "Blocked",
+		Resource: decision.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "test-app",
+			Namespace: "default",
+		},
+		Violations: []decision.Violation{
+			{
+				PolicyID: "POL-001",
+				Title:    "Test Violation",
+				Severity: decision.SeverityHigh,
+				Message:  "A violation with no standards",
+				// Standards deliberately omitted
+			},
+		},
+	}
+
+	out := RenderDecision(d, nil)
+
+	// Standards line must NOT appear when Standards is empty
+	if strings.Contains(out, "📋 Standards:") {
+		t.Error("RenderDecision() should not show standards line when Standards is empty")
+	}
+}
+
+func TestRenderDecision_Standards_Korean(t *testing.T) {
+	tr, err := i18n.New("ko")
+	if err != nil {
+		t.Fatalf("i18n.New(ko) error = %v", err)
+	}
+
+	d := decision.SecurityDecision{
+		ID:        "test-standards-ko",
+		Timestamp: time.Date(2026, 2, 5, 16, 30, 0, 0, time.UTC),
+		Version:   "v1alpha1",
+		Status:    decision.StatusBlocked,
+		Summary:   "Blocked",
+		Resource: decision.ResourceRef{
+			Kind:      "Deployment",
+			Name:      "test-app",
+			Namespace: "default",
+		},
+		Violations: []decision.Violation{
+			{
+				PolicyID: "POL-SEC-001",
+				Title:    "Privileged Container",
+				Severity: decision.SeverityCritical,
+				Message:  "Container runs as privileged",
+				Standards: []decision.StandardRef{
+					{ID: "CIS 5.2.1", URL: "https://www.cisecurity.org/benchmark/kubernetes"},
+				},
+			},
+		},
+	}
+
+	out := RenderDecision(d, tr)
+
+	// Korean standards label
+	if !strings.Contains(out, "📋 보안 기준:") {
+		t.Error("RenderDecision() missing Korean standards label (📋 보안 기준:)")
+	}
+	// Standard IDs are technical identifiers and must NOT be translated
+	if !strings.Contains(out, "CIS 5.2.1") {
+		t.Error("RenderDecision() standard ID should not be translated")
 	}
 }
 

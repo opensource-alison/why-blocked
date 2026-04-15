@@ -21,6 +21,7 @@ spec:
         securityContext:
           privileged: false
           runAsNonRoot: true
+          allowPrivilegeEscalation: false
       volumes:
       - name: config
         configMap:

@@ -4,12 +4,29 @@ import (
 	"encoding/json"
 
 	"github.com/alisonui/why-blocked/internal/decision"
+	"github.com/alisonui/why-blocked/internal/detect"
 )
 
 // DecisionEnvelope is the top-level JSON output for a SecurityDecision.
 type DecisionEnvelope struct {
 	SchemaVersion string       `json:"schemaVersion"`
 	Decision      decisionView `json:"decision"`
+}
+
+// DiagnoseEnvelope is the top-level JSON output for diagnose.
+type DiagnoseEnvelope struct {
+	SchemaVersion string          `json:"schemaVersion"`
+	BlockSource   blockSourceView `json:"blockSource"`
+	Decision      *decisionView   `json:"decision,omitempty"`
+}
+
+type blockSourceView struct {
+	Engine     string   `json:"engine"`
+	PolicyName string   `json:"policyName,omitempty"`
+	RuleName   string   `json:"ruleName,omitempty"`
+	RawMessage string   `json:"rawMessage"`
+	Confidence string   `json:"confidence"`
+	Hints      []string `json:"hints,omitempty"`
 }
 
 type decisionView struct {
@@ -30,14 +47,20 @@ type resourceView struct {
 	Namespace string `json:"namespace"`
 }
 
+type standardRefView struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}
+
 type violationView struct {
-	PolicyID   string         `json:"policyId"`
-	Title      string         `json:"title"`
-	Severity   string         `json:"severity"`
-	Message    string         `json:"message"`
-	Evidence   []evidenceView `json:"evidence"`
-	Fix        []actionView   `json:"fix"`
-	References []string       `json:"references"`
+	PolicyID   string            `json:"policyId"`
+	Title      string            `json:"title"`
+	Severity   string            `json:"severity"`
+	Message    string            `json:"message"`
+	Evidence   []evidenceView    `json:"evidence"`
+	Fix        []actionView      `json:"fix"`
+	Standards  []standardRefView `json:"standards,omitempty"`
+	References []string          `json:"references"`
 }
 
 type evidenceView struct {
@@ -58,6 +81,19 @@ func RenderDecisionJSON(d decision.SecurityDecision) ([]byte, error) {
 	env := DecisionEnvelope{
 		SchemaVersion: "v1",
 		Decision:      toDecisionView(d),
+	}
+	return json.MarshalIndent(env, "", "  ")
+}
+
+// RenderDiagnoseJSON returns pretty-printed JSON for a block source and optional decision.
+func RenderDiagnoseJSON(source *detect.BlockSource, d *decision.SecurityDecision) ([]byte, error) {
+	env := DiagnoseEnvelope{
+		SchemaVersion: "v1",
+		BlockSource:   toBlockSourceView(source),
+	}
+	if d != nil {
+		decisionView := toDecisionView(*d)
+		env.Decision = &decisionView
 	}
 	return json.MarshalIndent(env, "", "  ")
 }
@@ -95,6 +131,26 @@ func toDecisionView(d decision.SecurityDecision) decisionView {
 	}
 }
 
+func toBlockSourceView(source *detect.BlockSource) blockSourceView {
+	if source == nil {
+		return blockSourceView{}
+	}
+
+	hints := source.Hints
+	if hints == nil {
+		hints = []string{}
+	}
+
+	return blockSourceView{
+		Engine:     source.Engine,
+		PolicyName: source.PolicyName,
+		RuleName:   source.RuleName,
+		RawMessage: source.RawMessage,
+		Confidence: source.Confidence,
+		Hints:      hints,
+	}
+}
+
 func toViolationView(v decision.Violation) violationView {
 	evidence := make([]evidenceView, len(v.Evidence))
 	for i, e := range v.Evidence {
@@ -120,6 +176,11 @@ func toViolationView(v decision.Violation) violationView {
 		refs = []string{}
 	}
 
+	var standards []standardRefView
+	for _, s := range v.Standards {
+		standards = append(standards, standardRefView{ID: s.ID, URL: s.URL})
+	}
+
 	return violationView{
 		PolicyID:   v.PolicyID,
 		Title:      v.Title,
@@ -127,6 +188,7 @@ func toViolationView(v decision.Violation) violationView {
 		Message:    v.Message,
 		Evidence:   evidence,
 		Fix:        fix,
+		Standards:  standards,
 		References: refs,
 	}
 }

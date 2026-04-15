@@ -76,13 +76,18 @@ $ echo $?
 ```bash
 $ kubectl why eval -f testdata/safe-deployment.yaml
 
-WHY: Resource meets security requirements
+WHY: Resource meets security requirements with 1 advisory
 STATUS: ALLOWED
 
 RESOURCE: Deployment/safe-app
 NAMESPACE: production
 DECISION: eval-ff9af99d5fc8
 TIME: 2026-02-08T10:12:26Z
+
+VIOLATIONS (1):
+1) ℹ️ [INFO] NetworkPolicy not verified
+   What: Cannot verify NetworkPolicy exists for namespace 'production' in offline mode
+   ...
 
 Saved decision eval-ff9af99d5fc8 to ~/.kubectl-why/decisions/...
 
@@ -166,6 +171,11 @@ Currently supports:
 - Pods (v1)
 - StatefulSets (apps/v1)
 - DaemonSets (apps/v1)
+- Jobs (batch/v1)
+- CronJobs (batch/v1)
+- ReplicaSets (apps/v1)
+- Roles and ClusterRoles
+- RoleBindings and ClusterRoleBindings
 
 Any resource with a pod template spec will be evaluated.
 
@@ -179,6 +189,7 @@ The eval command applies the same rules as the online evaluator:
 | POL-SEC-002 | HIGH | HostPath volume detected |
 | POL-SEC-003 | HIGH | runAsNonRoot not set |
 | POL-SEC-004 | HIGH | Image uses :latest tag or no tag |
+| ADV-NET-001 | INFO | NetworkPolicy presence cannot be verified offline |
 
 ## File Format
 
