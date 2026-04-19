@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alisonui/why-blocked/internal/ui"
+	"github.com/opensource-alison/why-blocked/internal/ui"
 )
 
 // TestMain disables colors globally for all tests to ensure consistent output

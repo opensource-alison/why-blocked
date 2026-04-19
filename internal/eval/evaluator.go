@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alisonui/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/decision"
 )
 
 // Evaluator checks Kubernetes resources against security policies.

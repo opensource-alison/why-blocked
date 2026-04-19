@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alisonui/why-blocked/internal/decision"
-	"github.com/alisonui/why-blocked/internal/repository"
+	"github.com/opensource-alison/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/repository"
 )
 
 func createTestDecision(id, name, namespace string, ts time.Time) decision.SecurityDecision {

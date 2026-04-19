@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alisonui/why-blocked/internal/decision"
-	"github.com/alisonui/why-blocked/internal/detect"
-	"github.com/alisonui/why-blocked/internal/i18n"
-	"github.com/alisonui/why-blocked/internal/ui"
+	"github.com/opensource-alison/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/detect"
+	"github.com/opensource-alison/why-blocked/internal/i18n"
+	"github.com/opensource-alison/why-blocked/internal/ui"
 )
 
 // RenderDecision formats a SecurityDecision as plain text for human consumption.

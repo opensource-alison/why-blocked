@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alisonui/why-blocked/internal/ui"
+	"github.com/opensource-alison/why-blocked/internal/ui"
 )
 
 // PrintGlobalUsage returns the short global help text for kubectl-why (used by --help).

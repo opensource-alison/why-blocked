@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alisonui/why-blocked/internal/decision"
-	"github.com/alisonui/why-blocked/internal/detect"
+	"github.com/opensource-alison/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/detect"
 )
 
 func TestRenderDecisionJSON_ValidJSON(t *testing.T) {

@@ -3,8 +3,8 @@ package output
 import (
 	"encoding/json"
 
-	"github.com/alisonui/why-blocked/internal/decision"
-	"github.com/alisonui/why-blocked/internal/detect"
+	"github.com/opensource-alison/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/detect"
 )
 
 // DecisionEnvelope is the top-level JSON output for a SecurityDecision.

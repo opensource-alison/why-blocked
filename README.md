@@ -22,7 +22,7 @@ kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -
 
 ```bash
 # From source
-go install github.com/alisonui/why-blocked/cmd/why@latest
+go install github.com/opensource-alison/why-blocked/cmd/why@latest
 ```
 
 Or download a binary from the [Releases](../../releases) page.

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/alisonui/why-blocked/internal/execx"
+	"github.com/opensource-alison/why-blocked/internal/execx"
 )
 
 const maxTopPackages = 5

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/alisonui/why-blocked/internal/execx"
+	"github.com/opensource-alison/why-blocked/internal/execx"
 )
 
 func loadFixture(t *testing.T, name string) []byte {

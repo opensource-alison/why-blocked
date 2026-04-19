@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/alisonui/why-blocked/internal/decision"
-	"github.com/alisonui/why-blocked/internal/repository"
+	"github.com/opensource-alison/why-blocked/internal/decision"
+	"github.com/opensource-alison/why-blocked/internal/repository"
 )
 
 type FileDecisionRepository struct {
