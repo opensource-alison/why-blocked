@@ -25,7 +25,7 @@ The `Evaluator` takes a Kubernetes resource specification (as a generic `map[str
 ```go
 import (
     "time"
-    "github.com/alisonui/why-blocked/internal/eval"
+    "github.com/opensource-alison/why-blocked/internal/eval"
 )
 
 evaluator := eval.New("v1alpha1")
