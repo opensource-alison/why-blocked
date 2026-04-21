@@ -20,12 +20,18 @@ kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -
 
 ## Installation
 
+### Via Krew (recommended)
 ```bash
-# From source
+kubectl krew install why-blocked
+```
+
+### From source
+```bash
 go install github.com/opensource-alison/why-blocked/cmd/why@latest
 ```
 
-Or download a binary from the [Releases](../../releases) page.
+### Binary
+Download a pre-built binary from the [Releases](../../releases) page.
 
 ## Commands
 
