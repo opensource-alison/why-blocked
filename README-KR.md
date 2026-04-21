@@ -20,12 +20,18 @@ kubectl apply -f pod.yaml 2>&1 | kubectl why diagnose -
 
 ## 설치
 
+### Krew 사용 (권장)
 ```bash
-# 소스에서 설치
+kubectl krew install why-blocked
+```
+
+### 소스에서 설치
+```bash
 go install github.com/opensource-alison/why-blocked/cmd/why@latest
 ```
 
-또는 [Releases](../../releases) 페이지에서 바이너리를 다운로드하세요.
+### 바이너리
+[Releases](../../releases) 페이지에서 사전 빌드된 바이너리를 다운로드하세요.
 
 ## 명령어
 
